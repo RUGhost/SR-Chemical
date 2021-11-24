@@ -83,7 +83,7 @@ fun ProductionScreen() {
                 OutlinedTextField(
                     value = currentLevel,
                     onValueChange = {
-                        currentLevel = it
+                        currentLevel = getValidatedNumber(text = it, beforeDot = 2, afterDot = 1)
                     },
                     label = { Text(text = "Current Level") },
                     singleLine = true,
@@ -94,7 +94,7 @@ fun ProductionScreen() {
                 OutlinedTextField(
                     value = previousLevel,
                     onValueChange = {
-                        previousLevel = it
+                        previousLevel = getValidatedNumber(text = it, beforeDot = 2, afterDot = 1)
                     },
                     label = { Text(text = "Previous Level") },
                     singleLine = true,
@@ -106,7 +106,7 @@ fun ProductionScreen() {
             Spacer(modifier = Modifier.height(20.dp))
             Button(
                 onClick = {
-                    if (currentLevel.isEmpty() && previousLevel.isEmpty()) {
+                    if (currentLevel.isEmpty() || previousLevel.isEmpty()) {
                         Toast.makeText(context, "Please Enter Number", Toast.LENGTH_SHORT).show()
                     } else {
                         //want to query current level in DB. This query give me id, level and volume
