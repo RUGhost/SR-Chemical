@@ -1,0 +1,159 @@
+package com.aminul.companion.screen
+
+import android.app.Application
+import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.LightGray
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aminul.companion.database.UserViewModel
+import com.aminul.companion.database.UserViewModelFactory
+import com.aminul.companion.ui.theme.Purple500
+import kotlinx.coroutines.launch
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+
+@Composable
+fun TankLevelConverter(){
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val userViewModel: UserViewModel = viewModel(
+        factory = UserViewModelFactory(context.applicationContext as Application)
+    )
+    val getUserRecord = userViewModel.readAllData.observeAsState(listOf()).value
+    var level by remember { mutableStateOf("") }
+
+
+    Scaffold {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            horizontalAlignment= Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Tank Level Converter",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            OutlinedTextField(
+                value = level,
+                onValueChange = {
+                        level = getValidatedNumber(text = it, beforeDot = 2, afterDot = 1)
+                },
+                label = { Text(text = "Enter Level")},
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(0.8f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(modifier = Modifier.height(25.dp))
+            Button(
+                onClick = {
+                    if (level.isNotEmpty()){
+                        scope.launch {
+                            userViewModel.getUser(level.toDouble())
+                        }
+                    }
+                    else Toast.makeText(context,"Please Enter Number", Toast.LENGTH_SHORT).show()
+                },
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .padding(10.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = ButtonDefaults.buttonColors(Purple500)
+            ){
+                Text(
+                    text = "Submit",
+                    color = Color.White,
+                    fontSize = 18.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(50.dp))
+            Row (
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Purple500)
+                    .padding(15.dp)
+            ){
+                Text(
+                    text = "Level",
+                    modifier = Modifier.weight(0.3f),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "Volume",
+                    modifier = Modifier.weight(0.3f),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Weight",
+                    modifier = Modifier.weight(0.3f),
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            if (getUserRecord.isNotEmpty()){
+                val weight = getUserRecord[0].volume * 1.41
+                val filteredWeight = getValidatedNumber(text = weight.toString(), beforeDot = 2, afterDot = 3)
+                Row (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LightGray.copy(0.6f))
+                        .padding(15.dp)
+                ){
+                    Text(
+                        text = getUserRecord[0].level.toString(),
+                        modifier = Modifier.weight(0.3f),
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = getUserRecord[0].volume.toString(),
+                        modifier = Modifier.weight(0.3f),
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = filteredWeight,
+                        modifier = Modifier.weight(0.3f),
+                        color = Color.Black,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+fun getValidatedNumber(text: String, beforeDot: Int, afterDot: Int): String{
+    val filteredChars = text.filterIndexed { index, c ->
+        c in "0123456789" || (c == '.' && text.indexOf('.') == index)
+    }
+    return if (filteredChars.contains('.')){
+        val beforeDecimal = filteredChars.substringBefore('.')
+        val afterDecimal = filteredChars.substringAfter('.')
+        beforeDecimal.take(beforeDot) + "." + afterDecimal.take(afterDot)
+    } else {
+        filteredChars.take(2)
+    }
+}
