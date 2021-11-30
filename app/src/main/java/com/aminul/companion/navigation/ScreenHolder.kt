@@ -18,10 +18,10 @@ sealed class ScreenHolder(
         title = "Production",
         icon = R.drawable.ic_production
     )
-    object Setting: ScreenHolder(
-        route = "setting",
+    object Tools: ScreenHolder(
+        route = "tools",
         title = "Tools",
-        icon = R.drawable.ic_group
+        icon = R.drawable.ic_tools
     )
     object About: ScreenHolder(
         route = "about",

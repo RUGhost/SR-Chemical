@@ -80,7 +80,7 @@ fun BottomBar(navController: NavHostController){
     val screens = listOf(
         ScreenHolder.Home,
         ScreenHolder.Production,
-        ScreenHolder.Setting
+        ScreenHolder.Tools
     )
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -271,7 +271,9 @@ fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder
             contentDescription = item.title,
             colorFilter = ColorFilter.tint(Color.Black),
             contentScale = ContentScale.Fit,
-            modifier = Modifier.height(24.dp).width(24.dp)
+            modifier = Modifier
+                .height(24.dp)
+                .width(24.dp)
         )
         Spacer(modifier = Modifier.width(7.dp))
         Text(

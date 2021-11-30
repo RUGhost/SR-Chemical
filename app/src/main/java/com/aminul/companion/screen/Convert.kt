@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -23,8 +25,6 @@ import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
 import com.aminul.companion.ui.theme.Purple500
 import kotlinx.coroutines.launch
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 
 @Composable
@@ -36,6 +36,7 @@ fun TankLevelConverter(){
     )
     val getUserRecord = userViewModel.readAllData.observeAsState(listOf()).value
     var level by remember { mutableStateOf("") }
+    val localFocusManager = LocalFocusManager.current
 
 
     Scaffold {
@@ -60,7 +61,12 @@ fun TankLevelConverter(){
                 label = { Text(text = "Enter Level")},
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(0.8f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardActions = KeyboardActions(
+                    onDone ={
+                        localFocusManager.clearFocus()
+                    }
+                )
             )
 
             Spacer(modifier = Modifier.height(25.dp))
@@ -68,7 +74,9 @@ fun TankLevelConverter(){
                 onClick = {
                     if (level.isNotEmpty()){
                         scope.launch {
-                            userViewModel.getUser(level.toDouble())
+                            val user = arrayListOf<Double>()
+                            user.add(level.toDouble())
+                            userViewModel.getUserList(user)
                         }
                     }
                     else Toast.makeText(context,"Please Enter Number", Toast.LENGTH_SHORT).show()
@@ -85,12 +93,12 @@ fun TankLevelConverter(){
                     fontSize = 18.sp
                 )
             }
-            Spacer(modifier = Modifier.height(50.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Row (
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Purple500)
-                    .padding(15.dp)
+                    .padding(7.dp)
             ){
                 Text(
                     text = "Level",
@@ -114,12 +122,12 @@ fun TankLevelConverter(){
 
             if (getUserRecord.isNotEmpty()){
                 val weight = getUserRecord[0].volume * 1.41
-                val filteredWeight = getValidatedNumber(text = weight.toString(), beforeDot = 2, afterDot = 3)
+                val filteredWeight = getValidatedNumber(weight.toString(), 2, 3)
                 Row (
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(LightGray.copy(0.6f))
-                        .padding(15.dp)
+                        .padding(7.dp)
                 ){
                     Text(
                         text = getUserRecord[0].level.toString(),

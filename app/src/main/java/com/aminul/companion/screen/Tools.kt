@@ -1,6 +1,7 @@
 package com.aminul.companion.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -44,9 +45,10 @@ fun TabContent(pagerState: PagerState) {
 @ExperimentalPagerApi
 @Composable
 fun Tabs(pagerState: PagerState) {
-    val list = listOf("MEI 1", "MEI 2", "MEI 3", "MEI 1", "MEI 2", "MEI 3")
+    val list = listOf("Caustic", "HCl", "MEI 3", "MEI 4", "MEI 5", "MEI 6")
     val scope = rememberCoroutineScope()
     ScrollableTabRow(
+        edgePadding = 5.dp,
         selectedTabIndex = pagerState.currentPage,
         backgroundColor = Color.Blue,
         contentColor = Color.White,

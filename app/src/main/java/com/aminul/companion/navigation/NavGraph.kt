@@ -21,7 +21,7 @@ fun NavGraph(navController: NavHostController){
         composable(route = ScreenHolder.Production.route){
             ProductionScreen()
         }
-        composable(route = ScreenHolder.Setting.route){
+        composable(route = ScreenHolder.Tools.route){
             SettingScreen()
         }
         composable(route = ScreenHolder.About.route){

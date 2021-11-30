@@ -14,9 +14,15 @@ class UserViewModel(application: Application):AndroidViewModel(application){
         repository = UserRepository(userDao)
     }
 
-    fun getUser(userId: Double){
+//    fun getUser(userId: Double){
+//        viewModelScope.launch(Dispatchers.IO) {
+//            _readAllData.postValue(repository.getUserData(userId))
+//        }
+//    }
+
+    fun getUserList(userId: List<Double>){
         viewModelScope.launch(Dispatchers.IO) {
-            _readAllData.postValue(repository.getUserData(userId))
+            _readAllData.postValue(repository.getUserDataList(userId))
         }
     }
 //    fun addUser(item: List<User>){

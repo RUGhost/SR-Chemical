@@ -5,7 +5,11 @@ class UserRepository(private val userDao: UserDao) {
 //        userDao.insertUser(item)
 //    }
 
-    fun getUserData(userId: Double): List<User> {
-        return userDao.getUser(userId)
+//    fun getUserData(userId: Double): List<User> {
+//        return userDao.getUser(userId)
+//    }
+
+    fun getUserDataList(userId: List<Double>): List<User> {
+        return userDao.getUserList(userId)
     }
 }
