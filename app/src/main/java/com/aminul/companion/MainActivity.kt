@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -15,7 +16,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -30,22 +33,37 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.aminul.companion.appTheme.AppTheme
+import com.aminul.companion.appTheme.ThemeSetting
 import com.aminul.companion.navigation.NavGraph
 import com.aminul.companion.navigation.ScreenHolder
 import com.google.accompanist.pager.ExperimentalPagerApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.aminul.companion.ui.theme.CompanionTheme
+import com.aminul.companion.ui.theme.darkGreenStatus
+import com.aminul.companion.ui.theme.forestGreenStatus
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var themeSetting: ThemeSetting
     @ExperimentalPagerApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CompanionTheme {
-                // A surface container using the 'background' color from the theme
+            val theme = themeSetting.themeStream.collectAsState()
+            val useDarkColors = when(theme.value){
+                AppTheme.MODE_AUTO -> isSystemInDarkTheme()
+                AppTheme.MODE_DAY -> false
+                AppTheme.MODE_NIGHT -> true
+            }
+            CompanionTheme(darkTheme = useDarkColors) {
+                val color = if (useDarkColors) darkGreenStatus else forestGreenStatus
+                window.statusBarColor=color.toArgb()
                 Surface(color = MaterialTheme.colors.background) {
-                    MainScreen()
+                    MainScreen(onItemSelected = {theme -> themeSetting.theme = theme})
                 }
             }
         }
@@ -54,14 +72,14 @@ class MainActivity : ComponentActivity() {
 
 @ExperimentalPagerApi
 @Composable
-fun MainScreen(){
+fun MainScreen(onItemSelected: (AppTheme) -> Unit){
     val scaffoldState = rememberScaffoldState(rememberDrawerState(initialValue = DrawerValue.Closed))
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
 
     Scaffold(
         scaffoldState = scaffoldState,
-        topBar = { TopBar(scope = scope,scaffoldState = scaffoldState, navController = navController)},
+        topBar = { TopBar(scope = scope,scaffoldState = scaffoldState, navController = navController, onItemSelected = onItemSelected)},
 
         bottomBar = {
             BottomBar(navController = navController)
@@ -85,7 +103,7 @@ fun BottomBar(navController: NavHostController){
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    BottomNavigation {
+    BottomNavigation(backgroundColor = MaterialTheme.colors.primary) {
         screens.forEach { screen ->
             AddItem(
                 screen = screen,
@@ -104,7 +122,7 @@ fun RowScope.AddItem(
 ){
     BottomNavigationItem(
         label = {
-            Text(text = screen.title)
+            Text(text = screen.title, fontWeight = FontWeight.SemiBold)
         },
         icon = {
             Icon(
@@ -120,11 +138,13 @@ fun RowScope.AddItem(
                 popUpTo(navController.graph.findStartDestination().id)
                 launchSingleTop = true
             }
-        }
+        },
+        selectedContentColor = MaterialTheme.colors.background,
+        unselectedContentColor = MaterialTheme.colors.onBackground
     )
 }
 @Composable
-fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: NavHostController){
+fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: NavHostController,onItemSelected: (AppTheme) -> Unit){
     val menuExpanded = remember { mutableStateOf(false) }
     TopAppBar(
         title = {
@@ -153,8 +173,8 @@ fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: N
                 )
             }
         },
-        backgroundColor = Color.Green,
-        contentColor = Color.Black,
+        backgroundColor = MaterialTheme.colors.primary,
+        contentColor = MaterialTheme.colors.onPrimary,
         actions = {
             IconButton(
                 onClick = {
@@ -167,14 +187,16 @@ fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: N
                 )
             }
             Column(
-                modifier = Modifier
+                modifier = Modifier.wrapContentSize(Alignment.TopStart)
             ) {
                 DropdownMenu(
                     expanded = menuExpanded.value,
                     onDismissRequest = {
                         menuExpanded.value = false
                     },
-                    modifier = Modifier.width(200.dp)
+                    modifier = Modifier
+                        .width(200.dp)
+                        .wrapContentSize(Alignment.TopStart)
                 ) {
                     DropdownMenuItem(onClick = {
                         navController.navigate(ScreenHolder.ActionOne.route)
@@ -187,6 +209,30 @@ fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: N
                         menuExpanded.value = false
                     }) {
                         Text(text = ScreenHolder.ActionTwo.title)
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_AUTO.ordinal))
+                            menuExpanded.value = false
+                        }
+                    ) {
+                        Text(text = "System")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_DAY.ordinal))
+                            menuExpanded.value = false
+                        }
+                    ) {
+                        Text(text = "Day")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_NIGHT.ordinal))
+                            menuExpanded.value = false
+                        }
+                    ) {
+                        Text(text = "Night")
                     }
                 }
             }
@@ -202,12 +248,12 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
     )
     Column(
         modifier = Modifier
-            .background(color = Color.White)
+            .background(color = MaterialTheme.colors.background)
     ) {
         Row(modifier = Modifier
             .fillMaxWidth()
             .height(120.dp)
-            .background(Color.LightGray),
+            .background(MaterialTheme.colors.surface),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -220,10 +266,8 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
                     .padding(10.dp)
             )
         }
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(5.dp)
-        )
+        Spacer(modifier = Modifier.fillMaxWidth().height(5.dp))
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination
         items.forEach { item ->
@@ -245,7 +289,7 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = "Copy Right",
-            color = Color.Black,
+            color = MaterialTheme.colors.onBackground,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Thin,
             modifier = Modifier
@@ -256,20 +300,20 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
 }
 @Composable
 fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder) -> Unit) {
-    val background = if (selected) R.color.gray else android.R.color.transparent
+    val background = if (selected) MaterialTheme.colors.surface else Color.Transparent
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onItemClick(item) }
             .height(45.dp)
-            .background(colorResource(id = background))
+            .background(background)
             .padding(start = 10.dp)
     ) {
         Image(
             painter = painterResource(id = item.icon),
             contentDescription = item.title,
-            colorFilter = ColorFilter.tint(Color.Black),
+            colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .height(24.dp)
@@ -279,7 +323,7 @@ fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder
         Text(
             text = item.title,
             fontSize = 16.sp,
-            color = Color.Black
+            color = MaterialTheme.colors.onSurface
         )
     }
 }

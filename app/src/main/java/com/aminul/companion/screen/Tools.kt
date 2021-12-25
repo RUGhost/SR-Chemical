@@ -1,43 +1,36 @@
 package com.aminul.companion.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
 
 @ExperimentalPagerApi
 @Composable
-fun SettingScreen() {
-    TabScreen()
-}
-@ExperimentalPagerApi
-@Composable
-fun TabScreen(){
+fun SettingScreen(){
     val pagerState = rememberPagerState(pageCount = 6)
-    Column(modifier = Modifier.background(Color.White)
-    ) {
+    Column {
         Tabs(pagerState = pagerState)
         TabContent(pagerState = pagerState)
     }
 }
+
 @ExperimentalPagerApi
 @Composable
 fun TabContent(pagerState: PagerState) {
     HorizontalPager(state = pagerState) { page ->
         when(page){
-            0 -> TabOneScreen()
-            1 -> TabOneScreen()
-            2 -> TabOneScreen()
-            3 -> TabOneScreen()
-            4 -> TabOneScreen()
-            5 -> TabOneScreen()
+            0 -> Caustic()
+            1 -> HCl()
+            2 -> TabThreeScreen()
+            3 -> Caustic()
+            4 -> Caustic()
+            5 -> Caustic()
         }
     }
 }
@@ -50,12 +43,12 @@ fun Tabs(pagerState: PagerState) {
     ScrollableTabRow(
         edgePadding = 5.dp,
         selectedTabIndex = pagerState.currentPage,
-        backgroundColor = Color.Blue,
-        contentColor = Color.White,
+        backgroundColor = MaterialTheme.colors.primaryVariant,
+        contentColor = contentColorFor(backgroundColor = MaterialTheme.colors.primaryVariant),
         divider = {
             TabRowDefaults.Divider(
-                thickness = 2.dp,
-                color = Color.Green
+                thickness = 3.dp,
+                color = MaterialTheme.colors.secondary
             )
         },
         indicator = { tabPosition ->
@@ -65,8 +58,8 @@ fun Tabs(pagerState: PagerState) {
                     pagerState = pagerState,
                     tabPositions = tabPosition
                 ),
-                height = 2.dp,
-                color = Color.White
+                height = 3.dp,
+                color = MaterialTheme.colors.secondaryVariant
             )
         }
     ) {
@@ -75,7 +68,10 @@ fun Tabs(pagerState: PagerState) {
                 text= {
                     Text(
                         list[index],
-                        color = if (pagerState.currentPage == index) Color.White else Color.LightGray
+                        color = if (pagerState.currentPage == index) {
+                            MaterialTheme.colors.surface
+                        } else MaterialTheme.colors.onSurface,
+                        fontWeight = FontWeight.SemiBold
                     )
                 },
                 selected = pagerState.currentPage == index,

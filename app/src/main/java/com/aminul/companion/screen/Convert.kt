@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
-import com.aminul.companion.ui.theme.Purple500
 import kotlinx.coroutines.launch
 
 
@@ -37,7 +36,6 @@ fun TankLevelConverter(){
     val getUserRecord = userViewModel.readAllData.observeAsState(listOf()).value
     var level by remember { mutableStateOf("") }
     val localFocusManager = LocalFocusManager.current
-
 
     Scaffold {
         Column(
@@ -85,7 +83,7 @@ fun TankLevelConverter(){
                     .fillMaxWidth(0.5f)
                     .padding(10.dp),
                 shape = RoundedCornerShape(30.dp),
-                colors = ButtonDefaults.buttonColors(Purple500)
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
             ){
                 Text(
                     text = "Submit",
@@ -97,25 +95,25 @@ fun TankLevelConverter(){
             Row (
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Purple500)
+                    .background(MaterialTheme.colors.primary)
                     .padding(7.dp)
             ){
                 Text(
                     text = "Level",
                     modifier = Modifier.weight(0.3f),
-                    color = Color.White,
+                    color = MaterialTheme.colors.onPrimary,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = "Volume",
                     modifier = Modifier.weight(0.3f),
-                    color = Color.White,
+                    color = MaterialTheme.colors.onPrimary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "Weight",
                     modifier = Modifier.weight(0.3f),
-                    color = Color.White,
+                    color = MaterialTheme.colors.onPrimary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -126,25 +124,25 @@ fun TankLevelConverter(){
                 Row (
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LightGray.copy(0.6f))
+                        .background(MaterialTheme.colors.surface)
                         .padding(7.dp)
                 ){
                     Text(
                         text = getUserRecord[0].level.toString(),
                         modifier = Modifier.weight(0.3f),
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = getUserRecord[0].volume.toString(),
                         modifier = Modifier.weight(0.3f),
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = filteredWeight,
                         modifier = Modifier.weight(0.3f),
-                        color = Color.Black,
+                        color = MaterialTheme.colors.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                 }

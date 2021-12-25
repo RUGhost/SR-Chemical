@@ -17,14 +17,14 @@ fun TabThreeScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colors.background),
         contentAlignment = Alignment.Center
     ){
         Text(
-            text = "About",
+            text = "Tab Screen Three",
             fontSize = MaterialTheme.typography.h3.fontSize,
             fontWeight = FontWeight.Bold,
-            color = Color.Black
+            color = MaterialTheme.colors.onBackground
         )
     }
 }

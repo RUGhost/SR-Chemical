@@ -4,9 +4,7 @@ import android.app.Application
 import android.app.TimePickerDialog
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,7 +34,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
-import com.aminul.companion.ui.theme.Purple500
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -64,7 +61,7 @@ fun ProductionScreen() {
             radioOptions = timeOptions,
             title = "SELECT THE PRODUCTION TIME",
             fontSize = 13.sp,
-            cardBackgroundColor = Color(0xFFECECEC)
+            cardBackgroundColor = MaterialTheme.colors.surface
         )
         var isCustom = false
         when (selectedTime) {
@@ -90,7 +87,7 @@ fun ProductionScreen() {
         if (isCustom) {
             Surface(
                 modifier = Modifier.padding(start = 5.dp, end = 5.dp),
-                color = Color(0xFFECECEC),
+                color = MaterialTheme.colors.surface,
                 elevation = 8.dp,
                 shape = RoundedCornerShape(5.dp)
             ) {
@@ -186,7 +183,7 @@ fun ProductionScreen() {
                     .fillMaxWidth(0.5f)
                     .padding(10.dp),
                 shape = RoundedCornerShape(30.dp),
-                colors = ButtonDefaults.buttonColors(Purple500)
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
             ) {
                 Text(
                     text = "Submit",
@@ -199,7 +196,7 @@ fun ProductionScreen() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Purple500)
+                    .background(MaterialTheme.colors.primary)
                     .padding(7.dp)
             ) {
                 Text(
@@ -281,7 +278,8 @@ fun radioGroup(
                                 withStyle(
                                     style = SpanStyle(
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = fontSize
+                                        fontSize = fontSize,
+                                        color = MaterialTheme.colors.onSurface
                                     )
                                 ) { append("  $item  ") }
                             }
