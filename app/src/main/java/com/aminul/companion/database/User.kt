@@ -6,6 +6,6 @@ import androidx.room.*
 data class User (
     @PrimaryKey
     val id: Int,
-    val level: Double,
-    val volume: Double
+    var level: Double,
+    var volume: Double
 )

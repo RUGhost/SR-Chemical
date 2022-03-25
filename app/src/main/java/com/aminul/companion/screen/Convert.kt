@@ -1,6 +1,7 @@
 package com.aminul.companion.screen
 
 import android.app.Application
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,7 +14,6 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.LightGray
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +37,11 @@ fun TankLevelConverter(){
     var level by remember { mutableStateOf("") }
     val localFocusManager = LocalFocusManager.current
 
+    val list = remember { mutableStateListOf<Double>() }
+    var filteredWeight = ""
+
+
+
     Scaffold {
         Column(
             modifier = Modifier
@@ -50,7 +55,9 @@ fun TankLevelConverter(){
                 fontSize = 25.sp,
                 fontWeight = FontWeight.Bold
             )
+
             Spacer(modifier = Modifier.height(20.dp))
+
             OutlinedTextField(
                 value = level,
                 onValueChange = {
@@ -67,31 +74,74 @@ fun TankLevelConverter(){
                 )
             )
 
-            Spacer(modifier = Modifier.height(25.dp))
-            Button(
-                onClick = {
-                    if (level.isNotEmpty()){
-                        scope.launch {
-                            val user = arrayListOf<Double>()
-                            user.add(level.toDouble())
-                            userViewModel.getUserList(user)
-                        }
-                    }
-                    else Toast.makeText(context,"Please Enter Number", Toast.LENGTH_SHORT).show()
-                },
+            Spacer(modifier = Modifier.height(15.dp))
+
+            Row (
                 modifier = Modifier
-                    .fillMaxWidth(0.5f)
-                    .padding(10.dp),
-                shape = RoundedCornerShape(30.dp),
-                colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
+                    .fillMaxWidth()
+                    .padding(7.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ){
-                Text(
-                    text = "Submit",
-                    color = Color.White,
-                    fontSize = 18.sp
-                )
+                Button(
+                    onClick = {
+                        list.clear()
+                        level = ""
+                    },
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
+                ){
+                    Text(
+                        text = "Clear",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        if (level.isNotEmpty()){
+                            scope.launch {
+                                val user = arrayListOf<Double>()
+                                user.add(level.toDouble())
+                                userViewModel.getUserList(user)
+                            }
+                        }
+                        else Toast.makeText(context,"Please Enter Number", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
+                ){
+                    Text(
+                        text = "Submit",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }
+                Button(
+                    onClick = {
+                        if (filteredWeight.isNotEmpty()){
+                            list.add(filteredWeight.toDouble())
+                        } else{
+                            list.add(0.0)
+                        }
+                        Log.d("test", "${list.sum()}")
+                    },
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(MaterialTheme.colors.primary)
+                ){
+                    Text(
+                        text = "Add",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(20.dp))
+
+            Spacer(modifier = Modifier.height(15.dp))
+
             Row (
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,9 +168,10 @@ fun TankLevelConverter(){
                 )
             }
 
+
             if (getUserRecord.isNotEmpty()){
                 val weight = getUserRecord[0].volume * 1.41
-                val filteredWeight = getValidatedNumber(weight.toString(), 2, 3)
+                filteredWeight = getValidatedNumber(weight.toString(), 2, 3)
                 Row (
                     modifier = Modifier
                         .fillMaxWidth()

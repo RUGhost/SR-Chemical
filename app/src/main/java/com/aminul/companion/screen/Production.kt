@@ -1,6 +1,6 @@
 package com.aminul.companion.screen
-
 import android.app.Application
+import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.widget.Toast
@@ -35,13 +35,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.*
 
 
 @Composable
 fun ProductionScreen() {
     val timeOptions: List<String> = listOf("30M", "1H", "8H", "24H", "UD")
-    var timeDiff = 1
+    var timeDiff: Long = 1
     val scrollState = rememberScrollState()
     val localFocusManager = LocalFocusManager.current
     Column(
@@ -73,16 +74,16 @@ fun ProductionScreen() {
         }
 
 
-            val context = LocalContext.current
-            val scope = rememberCoroutineScope()
-            val userViewModel: UserViewModel = viewModel(
-                factory = UserViewModelFactory(context.applicationContext as Application)
-            )
-            val getUserRecord = userViewModel.readAllData.observeAsState(listOf()).value
-            var currentLevel by remember { mutableStateOf("") }
-            var previousLevel by remember { mutableStateOf("") }
-            var currentTime by remember { mutableStateOf("") }
-            var previousTime by remember { mutableStateOf("") }
+        val context = LocalContext.current
+        val scope = rememberCoroutineScope()
+        val userViewModel: UserViewModel = viewModel(
+            factory = UserViewModelFactory(context.applicationContext as Application)
+        )
+        val getUserRecord = userViewModel.readAllData.observeAsState(listOf()).value
+        var currentLevel by remember { mutableStateOf("") }
+        var previousLevel by remember { mutableStateOf("") }
+        var currentTime by remember { mutableStateOf("") }
+        var previousTime by remember { mutableStateOf("") }
 
         if (isCustom) {
             Surface(
@@ -92,20 +93,36 @@ fun ProductionScreen() {
                 shape = RoundedCornerShape(5.dp)
             ) {
                 Column {
-                    Text(
-                        text = "SELECT TIME",
-                        modifier = Modifier.padding(start = 10.dp,top = 5.dp,end = 5.dp),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = "Current Time",
+                            modifier = Modifier.padding(start = 10.dp,top = 5.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Previous TIme",
+                            modifier = Modifier.padding(top = 5.dp,end = 10.dp),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                     Row(modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        currentTime = timePickerButton(context = context, title = "Current")
-                        previousTime = timePickerButton(context = context, title = "Previous")
+                        currentTime = timePickerButton(context = context)
+                        previousTime = timePickerButton(context = context)
                     }
                 }
             }
-            timeDiff = currentTime.toInt() - previousTime.toInt()
+            val currentSdfTime = dateFormatted(currentTime)
+            val previousSdfTime = dateFormatted(previousTime)
+            val days = (currentSdfTime.time - previousSdfTime.time)/86400000
+            val hours = (currentSdfTime.time - previousSdfTime.time)%86400000/3600000
+            val minutes = (currentSdfTime.time - previousSdfTime.time)%86400000%3600000/60000
+            timeDiff = (days * 1440) + (hours * 60) + minutes
+
         }
         Spacer(modifier = Modifier.height(5.dp))
         Column(
@@ -302,23 +319,49 @@ fun radioGroup(
 }
 
 @Composable
-fun timePickerButton(context: Context, title: String): String {
+fun timePickerButton(context: Context): String {
     val calendar = Calendar.getInstance()
-    val hourState = remember { mutableStateOf(calendar[Calendar.HOUR_OF_DAY]) }
-    val minuteState = remember { mutableStateOf(calendar[Calendar.MINUTE]) }
-    val timePickerDialog = TimePickerDialog(
-        context, { _, hour: Int, minute: Int ->
-            hourState.value = hour
-            minuteState.value = minute
-        }, hourState.value, minuteState.value, true
-    )
-    val timeInMinute = (hourState.value * 60) + minuteState.value
+    val startYear = calendar.get(Calendar.YEAR)
+    val startMonth = calendar.get(Calendar.MONTH)
+    val startDay = calendar.get(Calendar.DAY_OF_MONTH)
+    val startHour = calendar.get(Calendar.HOUR_OF_DAY)
+    val startMinute = calendar.get(Calendar.MINUTE)
+
+    val date = remember { mutableStateOf("") }
+
+    val datePickerDialog = DatePickerDialog(context, { _, year, month, day ->
+        TimePickerDialog(context, { _, hour, minute ->
+            val pickedDateTime = Calendar.getInstance()
+            pickedDateTime.set(year, month, day, hour, minute)
+            val monthStr: String = if ((month + 1).toString().length  == 1){
+                "0${month + 1}"
+            } else {
+                month.toString()
+            }
+            val minuteStr: String = if (minute.toString().length == 1){
+                "0$minute"
+            } else{
+                minute.toString()
+            }
+            date.value = "$day/$monthStr/$year $hour:$minuteStr"
+        }, startHour, startMinute, true).show()
+    }, startYear, startMonth, startDay)
+
 
     TextButton(
-        onClick = { timePickerDialog.show() },
+        modifier = Modifier.sizeIn(minWidth = 120.dp) ,
+        onClick = { datePickerDialog.show() },
         colors = ButtonDefaults.buttonColors(backgroundColor = Color.Transparent),
     ) {
-        Text(text = title + ": ${hourState.value}:${minuteState.value}", fontSize = 15.sp)
+        Text(text = date.value, fontSize = 15.sp)
     }
-    return "$timeInMinute"
+    return date.value
+}
+fun dateFormatted(date: String): Date {
+    var fDate = Date()
+    if (date.isNotEmpty()){
+        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US)
+        fDate = sdf.parse(date)!!
+    }
+    return fDate
 }
