@@ -233,7 +233,7 @@ fun ProductionScreen() {
                     val previousWeight = getUserRecord[0].volume * 1.41
                     val currentWeight = getUserRecord[1].volume * 1.41
                     val productionRate = ((currentWeight - previousWeight) / timeDiff) * 60 * 1000
-                    val production = getValidatedNumber(productionRate.toString(), 3, 1)
+                    val production = getValidatedNumber(productionRate.toString(), 5, 1)
                     Text(
                         text = "$production kg/Hr",
                         color = Color.White,

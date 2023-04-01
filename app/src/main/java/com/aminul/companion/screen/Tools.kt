@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 @ExperimentalPagerApi
 @Composable
-fun SettingScreen(){
+fun AboutScreen(){
     val pagerState = rememberPagerState(pageCount = 6)
     Column {
         Tabs(pagerState = pagerState)

@@ -22,7 +22,7 @@ fun NavGraph(navController: NavHostController){
             ProductionScreen()
         }
         composable(route = ScreenHolder.Tools.route){
-            SettingScreen()
+            ActualProductionScreen()
         }
         composable(route = ScreenHolder.About.route){
             AboutScreen()
