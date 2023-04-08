@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.aminul.companion.appTheme.AppTheme
 import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
 import kotlinx.coroutines.launch
@@ -52,12 +53,7 @@ fun ProductionScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            modifier = Modifier.padding(top = 10.dp),
-            text = "Chlorine Production Calculator",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
+
         val selectedTime = radioGroup(
             radioOptions = timeOptions,
             title = "SELECT THE PRODUCTION TIME",

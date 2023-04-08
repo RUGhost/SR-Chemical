@@ -10,11 +10,8 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -26,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.aminul.companion.database.UserViewModel
 import com.aminul.companion.database.UserViewModelFactory
+
 
 @Composable
 fun TankLevelConverter() {
@@ -40,15 +38,6 @@ fun TankLevelConverter() {
     var level3 by remember { mutableStateOf("") }
     var level4 by remember { mutableStateOf("") }
 
-    var filteredWeight1: String
-    var filteredWeight2: String
-    var filteredWeight3: String
-    var filteredWeight4: String
-
-    val focusRequester1 = remember { FocusRequester() }
-    val focusRequester2 = remember { FocusRequester() }
-
-
     Scaffold {
         Column(
             modifier = Modifier
@@ -57,13 +46,6 @@ fun TankLevelConverter() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Tank Level Converter",
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
             Column {
                 Row {
                     OutlinedTextField(
@@ -78,9 +60,10 @@ fun TankLevelConverter() {
                             .padding(end = 5.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next),
+                            imeAction = ImeAction.Next
+                        ),
                         keyboardActions = KeyboardActions(
-                            onNext ={
+                            onNext = {
                                 localFocusManager.moveFocus(FocusDirection.Right)
                             }
                         )
@@ -93,12 +76,12 @@ fun TankLevelConverter() {
                         label = { Text(text = "Tank Level - B") },
                         singleLine = true,
                         modifier = Modifier
-                            .focusRequester(focusRequester1)
                             .fillMaxWidth(1f)
                             .padding(start = 5.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next),
+                            imeAction = ImeAction.Next
+                        ),
                         keyboardActions = KeyboardActions(
                             onNext = {
                                 localFocusManager.moveFocus(FocusDirection.Left)
@@ -120,9 +103,10 @@ fun TankLevelConverter() {
                             .padding(end = 5.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Next),
+                            imeAction = ImeAction.Next
+                        ),
                         keyboardActions = KeyboardActions(
-                            onNext ={
+                            onNext = {
                                 localFocusManager.moveFocus(FocusDirection.Right)
                             }
                         )
@@ -139,7 +123,8 @@ fun TankLevelConverter() {
                             .padding(start = 5.dp),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done),
+                            imeAction = ImeAction.Done
+                        ),
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 localFocusManager.clearFocus()
@@ -211,30 +196,38 @@ fun TankLevelConverter() {
                 )
             }
 
-            val indexID1 = getUserRecord.indexOfFirst { it.level.equals(level1.toDoubleOrNull() ?:0.0)}
-            val indexID2 = getUserRecord.indexOfFirst { it.level.equals(level2.toDoubleOrNull() ?:0.1)}
-            val indexID3 = getUserRecord.indexOfFirst { it.level.equals(level3.toDoubleOrNull() ?:0.2)}
-            val indexID4 = getUserRecord.indexOfFirst { it.level.equals(level4.toDoubleOrNull() ?:0.3)}
+            fun getIndex(level: String): Int {
+                return getUserRecord.indexOfFirst {
+                    it.level.equals(
+                        level.toDoubleOrNull() ?: 0.0
+                    )
+                }
+                    .let { if (it == -1) 0 else it }
+            }
 
-            val index1 = if (indexID1 == -1){ 0 } else indexID1
-            val index2 = if (indexID2 == -1){ 0 } else indexID2
-            val index3 = if (indexID3 == -1){ 0 } else indexID3
-            val index4 = if (indexID4 == -1){ 0 } else indexID4
+            val index1 = getIndex(level1)
+            val index2 = getIndex(level2)
+            val index3 = getIndex(level3)
+            val index4 = getIndex(level4)
 
             if (getUserRecord.isNotEmpty()) {
-                val weight1 = getUserRecord[index1].volume * 1.41
-                val weight2 = getUserRecord[index2].volume * 1.41
-                val weight3 = getUserRecord[index3].volume * 1.41
-                val weight4 = getUserRecord[index4].volume * 1.41
+                fun calculateWeight(index: Int): Double {
+                    return getUserRecord[index].volume * 1.41
+                }
 
-                filteredWeight1 = getValidatedNumber(weight1.toString(), 2, 3)
-                filteredWeight2 = getValidatedNumber(weight2.toString(), 2, 3)
-                filteredWeight3 = getValidatedNumber(weight3.toString(), 2, 3)
-                filteredWeight4 = getValidatedNumber(weight4.toString(), 2, 3)
+                val weight1 = calculateWeight(index1)
+                val weight2 = calculateWeight(index2)
+                val weight3 = calculateWeight(index3)
+                val weight4 = calculateWeight(index4)
 
-                val weight = (getUserRecord[index1].volume + getUserRecord[index2].volume
-                        + getUserRecord[index3].volume + getUserRecord[index4].volume) * 1.41
-                val totalWeight = getValidatedNumber(weight.toString(),3,3)
+                val filteredWeight1 = getValidatedNumber(weight1.toString(), 2, 3)
+                val filteredWeight2 = getValidatedNumber(weight2.toString(), 2, 3)
+                val filteredWeight3 = getValidatedNumber(weight3.toString(), 2, 3)
+                val filteredWeight4 = getValidatedNumber(weight4.toString(), 2, 3)
+
+                val weight = weight1 + weight2 + weight3 + weight4
+                val totalWeight = getValidatedNumber(weight.toString(), 3, 3)
+
 
                 Column {
                     if (getUserRecord[index1].volume != 0.0) {
@@ -369,7 +362,7 @@ fun TankLevelConverter() {
                             )
                         }
                     }
-                    if (totalWeight > 0.0.toString()){
+                    if (totalWeight > 0.0.toString()) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -394,6 +387,12 @@ fun TankLevelConverter() {
             }
         }
     }
+}
+
+@Composable
+fun Content(){
+
+
 }
 
 fun getValidatedNumber(text: String, beforeDot: Int, afterDot: Int): String {

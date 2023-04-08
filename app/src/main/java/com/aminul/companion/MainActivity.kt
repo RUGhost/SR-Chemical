@@ -8,26 +8,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -48,22 +50,27 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject lateinit var themeSetting: ThemeSetting
+    @Inject
+    lateinit var themeSetting: ThemeSetting
+
     @ExperimentalPagerApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
             val theme = themeSetting.themeStream.collectAsState()
-            val useDarkColors = when(theme.value){
+            val useDarkColors = when (theme.value) {
                 AppTheme.MODE_AUTO -> isSystemInDarkTheme()
                 AppTheme.MODE_DAY -> false
                 AppTheme.MODE_NIGHT -> true
             }
+
             CompanionTheme(darkTheme = useDarkColors) {
                 val color = if (useDarkColors) darkGreenStatus else forestGreenStatus
-                window.statusBarColor=color.toArgb()
+                window.statusBarColor = color.toArgb()
+
                 Surface(color = MaterialTheme.colors.background) {
-                    MainScreen(onItemSelected = {theme -> themeSetting.theme = theme})
+                    MainScreen(onItemSelected = { theme -> themeSetting.theme = theme })
                 }
             }
         }
@@ -72,21 +79,36 @@ class MainActivity : ComponentActivity() {
 
 @ExperimentalPagerApi
 @Composable
-fun MainScreen(onItemSelected: (AppTheme) -> Unit){
-    val scaffoldState = rememberScaffoldState(rememberDrawerState(initialValue = DrawerValue.Closed))
+fun MainScreen(onItemSelected: (AppTheme) -> Unit) {
+    val scaffoldState =
+        rememberScaffoldState(rememberDrawerState(initialValue = DrawerValue.Closed))
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
+    val (selectedScreenTitle, setSelectedScreenTitle) = remember { mutableStateOf("Tank Level Converter") }
 
     Scaffold(
         scaffoldState = scaffoldState,
-        topBar = { TopBar(scope = scope,scaffoldState = scaffoldState, navController = navController, onItemSelected = onItemSelected)},
-
-        bottomBar = {
-            BottomBar(navController = navController)
+        topBar = {
+            TopBar(
+                selectedScreenTitle = selectedScreenTitle,
+                scope = scope,
+                scaffoldState = scaffoldState,
+                onItemSelected = onItemSelected
+            )
         },
-
+         bottomBar = {
+            BottomBar(navController = navController) { screenTitle ->
+                setSelectedScreenTitle(screenTitle)
+            }
+        },
         drawerContent = {
-            DrawerContent(scope = scope, scaffoldState = scaffoldState, navController = navController)
+            DrawerContent(
+                scope = scope,
+                scaffoldState = scaffoldState,
+                navController = navController,
+                onScreenSelected = setSelectedScreenTitle,
+                onItemSelected = onItemSelected
+            )
         }
     ) {
         NavGraph(navController = navController)
@@ -94,12 +116,13 @@ fun MainScreen(onItemSelected: (AppTheme) -> Unit){
 }
 
 @Composable
-fun BottomBar(navController: NavHostController){
+fun BottomBar(navController: NavHostController, onScreenSelected: (String) -> Unit) {
     val screens = listOf(
         ScreenHolder.Home,
         ScreenHolder.Production,
-        ScreenHolder.Tools
+        ScreenHolder.HAP
     )
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
@@ -107,8 +130,13 @@ fun BottomBar(navController: NavHostController){
         screens.forEach { screen ->
             AddItem(
                 screen = screen,
-                currentDestination = currentDestination,
-                navController = navController
+                navController = navController,
+                onScreenSelected = {
+                    onScreenSelected(screen.header)
+                },
+                isSelected = currentDestination?.hierarchy?.any {
+                    it.route == screen.route
+                } == true
             )
         }
     }
@@ -117,9 +145,10 @@ fun BottomBar(navController: NavHostController){
 @Composable
 fun RowScope.AddItem(
     screen: ScreenHolder,
-    currentDestination: NavDestination?,
-    navController: NavHostController
-){
+    navController: NavHostController,
+    onScreenSelected: () -> Unit,
+    isSelected: Boolean
+) {
     BottomNavigationItem(
         label = {
             Text(text = screen.title, fontWeight = FontWeight.SemiBold)
@@ -130,31 +159,37 @@ fun RowScope.AddItem(
                 contentDescription = "Bottom Navigation Icon"
             )
         },
-        selected = currentDestination?.hierarchy?.any {
-            it.route == screen.route
-        } == true,
+        selected = isSelected,
+
         onClick = {
-            navController.navigate(screen.route){
+            navController.navigate(screen.route) {
                 popUpTo(navController.graph.findStartDestination().id)
                 launchSingleTop = true
             }
+            onScreenSelected()
         },
         selectedContentColor = MaterialTheme.colors.background,
         unselectedContentColor = MaterialTheme.colors.onBackground
     )
 }
+
 @Composable
-fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: NavHostController,onItemSelected: (AppTheme) -> Unit){
+fun TopBar(
+    selectedScreenTitle: String,
+    scope: CoroutineScope,
+    scaffoldState: ScaffoldState,
+    onItemSelected: (AppTheme) -> Unit
+) {
     val menuExpanded = remember { mutableStateOf(false) }
     TopAppBar(
         title = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-            ){
+            ) {
                 Text(
-                    text = "Companion App",
-                    fontSize = 20.sp,
+                    text = selectedScreenTitle,
+                    fontSize = 18.sp,
                     modifier = Modifier.align(Alignment.Center)
                 )
             }
@@ -175,73 +210,67 @@ fun TopBar(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: N
         },
         backgroundColor = MaterialTheme.colors.primary,
         contentColor = MaterialTheme.colors.onPrimary,
-        actions = {
-            IconButton(
-                onClick = {
-                    menuExpanded.value = true
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Action Button",
-                )
-            }
-            Column(
-                modifier = Modifier.wrapContentSize(Alignment.TopStart)
-            ) {
-                DropdownMenu(
-                    expanded = menuExpanded.value,
-                    onDismissRequest = {
-                        menuExpanded.value = false
-                    },
-                    modifier = Modifier
-                        .width(200.dp)
-                        .wrapContentSize(Alignment.TopStart)
-                ) {
-                    DropdownMenuItem(onClick = {
-                        navController.navigate(ScreenHolder.ActionOne.route)
-                        menuExpanded.value = false
-                    }) {
-                        Text(text = ScreenHolder.ActionOne.title)
-                    }
-                    DropdownMenuItem(onClick = {
-                        navController.navigate(ScreenHolder.ActionTwo.route)
-                        menuExpanded.value = false
-                    }) {
-                        Text(text = ScreenHolder.ActionTwo.title)
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_AUTO.ordinal))
-                            menuExpanded.value = false
-                        }
-                    ) {
-                        Text(text = "System")
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_DAY.ordinal))
-                            menuExpanded.value = false
-                        }
-                    ) {
-                        Text(text = "Day")
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_NIGHT.ordinal))
-                            menuExpanded.value = false
-                        }
-                    ) {
-                        Text(text = "Night")
-                    }
-                }
-            }
-        }
+//        actions = {
+//            IconButton(
+//                onClick = {
+//                    menuExpanded.value = true
+//                }
+//            ) {
+//                Icon(
+//                    imageVector = Icons.Default.MoreVert,
+//                    contentDescription = "Action Button",
+//                )
+//            }
+//            Column(
+//                modifier = Modifier.wrapContentSize(Alignment.TopStart)
+//            ) {
+//                DropdownMenu(
+//                    expanded = menuExpanded.value,
+//                    onDismissRequest = {
+//                        menuExpanded.value = false
+//                    },
+//                    modifier = Modifier
+//                        .width(200.dp)
+//                        .wrapContentSize(Alignment.TopStart)
+//                ) {
+//                    DropdownMenuItem(
+//                        onClick = {
+//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_AUTO.ordinal))
+//                            menuExpanded.value = false
+//                        }
+//                    ) {
+//                        Text(text = "System")
+//                    }
+//                    DropdownMenuItem(
+//                        onClick = {
+//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_DAY.ordinal))
+//                            menuExpanded.value = false
+//                        }
+//                    ) {
+//                        Text(text = "Day")
+//                    }
+//                    DropdownMenuItem(
+//                        onClick = {
+//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_NIGHT.ordinal))
+//                            menuExpanded.value = false
+//                        }
+//                    ) {
+//                        Text(text = "Night")
+//                    }
+//                }
+//            }
+//        }
     )
 }
 
 @Composable
-fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navController: NavController){
+fun DrawerContent(
+    scope: CoroutineScope,
+    scaffoldState: ScaffoldState,
+    navController: NavController,
+    onScreenSelected: (String) -> Unit,
+    onItemSelected: (AppTheme) -> Unit
+) {
     val items = listOf(
         ScreenHolder.About,
         ScreenHolder.Rate
@@ -250,10 +279,11 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
         modifier = Modifier
             .background(color = MaterialTheme.colors.background)
     ) {
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .background(MaterialTheme.colors.surface),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(MaterialTheme.colors.surface),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -266,18 +296,23 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
                     .padding(10.dp)
             )
         }
-        Spacer(modifier = Modifier.fillMaxWidth().height(5.dp))
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(5.dp)
+        )
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination
         items.forEach { item ->
             DrawerItem(
                 item = item,
-                selected = currentRoute?.hierarchy?.any{
+                selected = currentRoute?.hierarchy?.any {
                     it.route == item.route
                 } == true,
                 onItemClick = {
-                    navController.navigate(item.route){
+                    onScreenSelected(item.header)
+                    navController.navigate(item.route) {
                         popUpTo(navController.graph.findStartDestination().id)
                         launchSingleTop = false
                     }
@@ -286,6 +321,15 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
                     }
                 })
         }
+
+        val radioOption: List<String> = listOf("Auto", "Light", "Dark")
+        AlertDialogExample(
+            radioOptions = radioOption,
+            fontSize = 13.sp,
+            onItemSelected = onItemSelected
+        )
+
+
         Spacer(modifier = Modifier.weight(1f))
         Text(
             text = "Copy Right",
@@ -294,10 +338,11 @@ fun DrawerContent(scope: CoroutineScope, scaffoldState: ScaffoldState, navContro
             fontWeight = FontWeight.Thin,
             modifier = Modifier
                 .padding(12.dp)
-                .align(Alignment.CenterHorizontally)
+                .align(Alignment.CenterHorizontally),
         )
     }
 }
+
 @Composable
 fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder) -> Unit) {
     val background = if (selected) MaterialTheme.colors.surface else Color.Transparent
@@ -327,3 +372,70 @@ fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder
         )
     }
 }
+
+@Composable
+fun AlertDialogExample(
+    radioOptions: List<String> = listOf(),
+    fontSize: TextUnit = 11.sp,
+    onItemSelected: (AppTheme) -> Unit
+){
+    val showDialog = remember { mutableStateOf(false) }
+    var selectedOption by rememberSaveable { mutableStateOf(AppTheme.MODE_AUTO) }
+
+    TextButton(onClick = { showDialog.value = true }) {
+        Text("Show Dialog")
+    }
+
+    if (showDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showDialog.value = false },
+            title = { Text("Select Theme") },
+            text = {
+                if (radioOptions.isNotEmpty()) {
+                    Column(Modifier.padding(5.dp)) {
+                        radioOptions.forEach { item ->
+                            Row(
+                                Modifier.padding(5.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val appTheme = when (item) {
+                                    "Auto" -> AppTheme.MODE_AUTO
+                                    "Day" -> AppTheme.MODE_DAY
+                                    "Night" -> AppTheme.MODE_NIGHT
+                                    else -> AppTheme.MODE_AUTO
+                                }
+                                RadioButton(
+                                    selected = (appTheme == selectedOption),
+                                    onClick = { selectedOption = appTheme }
+                                )
+
+                                val annotatedString = buildAnnotatedString {
+                                    withStyle(
+                                        style = SpanStyle(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = fontSize,
+                                            color = MaterialTheme.colors.onSurface
+                                        )
+                                    ) { append("  $item  ") }
+                                }
+
+                                ClickableText(
+                                    text = annotatedString,
+                                    onClick = {
+                                        selectedOption = appTheme
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showDialog.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+}
+

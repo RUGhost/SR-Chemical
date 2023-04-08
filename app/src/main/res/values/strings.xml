@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Companion</string>
+    <string name="theme_default">Default Theme</string>
+    <string name="theme_dark">Dark Theme</string>
+    <string name="theme_light">Light Theme</string>
 </resources>
