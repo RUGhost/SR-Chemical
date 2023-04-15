@@ -14,7 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -34,6 +35,9 @@ import kotlinx.coroutines.launch
 fun ActualProductionScreen() {
     val scrollState = rememberScrollState()
     val localFocusManager = LocalFocusManager.current
+    val (focusRequesters1, focusRequesters2) = remember {
+        List(8) { FocusRequester() } to List(4) { FocusRequester() }
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -75,14 +79,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-A Current Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters1[0]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Right)
+                            focusRequesters1[1].requestFocus()
                         }
                     )
                 )
@@ -94,15 +98,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-A Previous Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters2[0]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Left)
-                            localFocusManager.moveFocus(FocusDirection.Down)
+                            focusRequesters2[1].requestFocus()
                         }
                     )
                 )
@@ -115,14 +118,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-B Current Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters1[1]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Right)
+                            focusRequesters1[2].requestFocus()
                         }
                     )
                 )
@@ -134,15 +137,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-B Previous Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters2[1]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Left)
-                            localFocusManager.moveFocus(FocusDirection.Down)
+                            focusRequesters2[2].requestFocus()
                         }
                     )
                 )
@@ -155,14 +157,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-C Current Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters1[2]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Right)
+                            focusRequesters1[3].requestFocus()
                         }
                     )
                 )
@@ -174,15 +176,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-C Previous Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters2[2]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Left)
-                            localFocusManager.moveFocus(FocusDirection.Down)
+                            focusRequesters2[3].requestFocus()
                         }
                     )
                 )
@@ -195,14 +196,14 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-D Current Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters1[3]),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Next
                     ),
                     keyboardActions = KeyboardActions(
                         onNext = {
-                            localFocusManager.moveFocus(FocusDirection.Right)
+                            focusRequesters2[0].requestFocus()
                         }
                     )
                 )
@@ -214,7 +215,7 @@ fun ActualProductionScreen() {
                     },
                     label = { Text(text = "T-D Previous Level") },
                     singleLine = true,
-                    modifier = Modifier.weight(0.5f),
+                    modifier = Modifier.weight(0.5f).focusRequester(focusRequesters2[3]),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     keyboardActions = KeyboardActions(
                         onDone = {

@@ -1,5 +1,6 @@
 package com.aminul.companion
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -20,13 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -60,9 +61,9 @@ class MainActivity : ComponentActivity() {
 
             val theme = themeSetting.themeStream.collectAsState()
             val useDarkColors = when (theme.value) {
-                AppTheme.MODE_AUTO -> isSystemInDarkTheme()
-                AppTheme.MODE_DAY -> false
-                AppTheme.MODE_NIGHT -> true
+                AppTheme.AUTO -> isSystemInDarkTheme()
+                AppTheme.LIGHT -> false
+                AppTheme.DARK -> true
             }
 
             CompanionTheme(darkTheme = useDarkColors) {
@@ -92,11 +93,10 @@ fun MainScreen(onItemSelected: (AppTheme) -> Unit) {
             TopBar(
                 selectedScreenTitle = selectedScreenTitle,
                 scope = scope,
-                scaffoldState = scaffoldState,
-                onItemSelected = onItemSelected
+                scaffoldState = scaffoldState
             )
         },
-         bottomBar = {
+        bottomBar = {
             BottomBar(navController = navController) { screenTitle ->
                 setSelectedScreenTitle(screenTitle)
             }
@@ -178,9 +178,7 @@ fun TopBar(
     selectedScreenTitle: String,
     scope: CoroutineScope,
     scaffoldState: ScaffoldState,
-    onItemSelected: (AppTheme) -> Unit
 ) {
-    val menuExpanded = remember { mutableStateOf(false) }
     TopAppBar(
         title = {
             Box(
@@ -210,56 +208,6 @@ fun TopBar(
         },
         backgroundColor = MaterialTheme.colors.primary,
         contentColor = MaterialTheme.colors.onPrimary,
-//        actions = {
-//            IconButton(
-//                onClick = {
-//                    menuExpanded.value = true
-//                }
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.MoreVert,
-//                    contentDescription = "Action Button",
-//                )
-//            }
-//            Column(
-//                modifier = Modifier.wrapContentSize(Alignment.TopStart)
-//            ) {
-//                DropdownMenu(
-//                    expanded = menuExpanded.value,
-//                    onDismissRequest = {
-//                        menuExpanded.value = false
-//                    },
-//                    modifier = Modifier
-//                        .width(200.dp)
-//                        .wrapContentSize(Alignment.TopStart)
-//                ) {
-//                    DropdownMenuItem(
-//                        onClick = {
-//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_AUTO.ordinal))
-//                            menuExpanded.value = false
-//                        }
-//                    ) {
-//                        Text(text = "System")
-//                    }
-//                    DropdownMenuItem(
-//                        onClick = {
-//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_DAY.ordinal))
-//                            menuExpanded.value = false
-//                        }
-//                    ) {
-//                        Text(text = "Day")
-//                    }
-//                    DropdownMenuItem(
-//                        onClick = {
-//                            onItemSelected(AppTheme.fromOrdinal(AppTheme.MODE_NIGHT.ordinal))
-//                            menuExpanded.value = false
-//                        }
-//                    ) {
-//                        Text(text = "Night")
-//                    }
-//                }
-//            }
-//        }
     )
 }
 
@@ -322,10 +270,7 @@ fun DrawerContent(
                 })
         }
 
-        val radioOption: List<String> = listOf("Auto", "Light", "Dark")
         AlertDialogExample(
-            radioOptions = radioOption,
-            fontSize = 13.sp,
             onItemSelected = onItemSelected
         )
 
@@ -375,67 +320,118 @@ fun DrawerItem(item: ScreenHolder, selected: Boolean, onItemClick: (ScreenHolder
 
 @Composable
 fun AlertDialogExample(
-    radioOptions: List<String> = listOf(),
-    fontSize: TextUnit = 11.sp,
     onItemSelected: (AppTheme) -> Unit
-){
+) {
+    val radioOptions: List<String> = listOf("Auto", "Light", "Dark")
+    val context = LocalContext.current
     val showDialog = remember { mutableStateOf(false) }
-    var selectedOption by rememberSaveable { mutableStateOf(AppTheme.MODE_AUTO) }
+    var selectedOption by rememberSaveable { mutableStateOf(getSelectedTheme(context)) }
 
-    TextButton(onClick = { showDialog.value = true }) {
-        Text("Show Dialog")
+    TextButton(
+        onClick = { showDialog.value = true }
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_theme),
+                contentDescription = "Theme Icon",
+                colorFilter = ColorFilter.tint(MaterialTheme.colors.onSurface),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .height(24.dp)
+                    .width(24.dp)
+            )
+            Spacer(modifier = Modifier.width(7.dp))
+            Text(
+                text = "Theme",
+                fontSize = 16.sp,
+                color = MaterialTheme.colors.onSurface
+            )
+        }
     }
 
     if (showDialog.value) {
         AlertDialog(
             onDismissRequest = { showDialog.value = false },
-            title = { Text("Select Theme") },
+            title = {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Select Theme",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
             text = {
-                if (radioOptions.isNotEmpty()) {
-                    Column(Modifier.padding(5.dp)) {
-                        radioOptions.forEach { item ->
-                            Row(
-                                Modifier.padding(5.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                val appTheme = when (item) {
-                                    "Auto" -> AppTheme.MODE_AUTO
-                                    "Day" -> AppTheme.MODE_DAY
-                                    "Night" -> AppTheme.MODE_NIGHT
-                                    else -> AppTheme.MODE_AUTO
+                Column(Modifier.padding(5.dp)) {
+                    radioOptions.forEach { item ->
+                        Row(
+                            Modifier.padding(5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (item.uppercase() == selectedOption.name),
+                                onClick = {
+                                    selectedOption = AppTheme.valueOf(item.uppercase())
+                                    saveSelectedTheme(context, selectedOption)
                                 }
-                                RadioButton(
-                                    selected = (appTheme == selectedOption),
-                                    onClick = { selectedOption = appTheme }
-                                )
+                            )
 
-                                val annotatedString = buildAnnotatedString {
-                                    withStyle(
-                                        style = SpanStyle(
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = fontSize,
-                                            color = MaterialTheme.colors.onSurface
-                                        )
-                                    ) { append("  $item  ") }
-                                }
-
-                                ClickableText(
-                                    text = annotatedString,
-                                    onClick = {
-                                        selectedOption = appTheme
-                                    }
-                                )
+                            val annotatedString = buildAnnotatedString {
+                                withStyle(
+                                    style = SpanStyle(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colors.onSurface
+                                    )
+                                ) { append("  $item  ") }
                             }
+
+                            ClickableText(
+                                text = annotatedString,
+                                onClick = {
+                                    selectedOption = AppTheme.valueOf(item.uppercase())
+                                    saveSelectedTheme(context = context, theme = selectedOption)
+                                }
+                            )
                         }
                     }
                 }
             },
             confirmButton = {
-                Button(onClick = { showDialog.value = false }) {
-                    Text("OK")
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = {
+                            showDialog.value = false
+                        }
+                    ) {
+                        Text(text = "Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            showDialog.value = false
+                            onItemSelected(selectedOption)
+                        }
+                    ) {
+                        Text(text = "OK")
+                    }
                 }
-            }
+            },
+            modifier = Modifier.size(width = 250.dp, height = 200.dp)
         )
     }
 }
 
+private fun getSelectedTheme(context: Context): AppTheme {
+    val prefs = context.getSharedPreferences("AppThemePrefs", Context.MODE_PRIVATE)
+    val themeValue = prefs.getInt("selected_theme", AppTheme.AUTO.ordinal)
+    return AppTheme.fromOrdinal(themeValue)
+}
+
+private fun saveSelectedTheme(context: Context, theme: AppTheme) {
+    val prefs = context.getSharedPreferences("AppThemePrefs", Context.MODE_PRIVATE)
+    prefs.edit().putInt("selected_theme", theme.ordinal).apply()
+}

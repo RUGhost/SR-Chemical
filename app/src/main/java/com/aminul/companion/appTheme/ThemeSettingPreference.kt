@@ -14,7 +14,7 @@ class ThemeSettingPreference @Inject constructor(
 ): ThemeSetting {
 
     override val themeStream: MutableStateFlow<AppTheme>
-    override var theme: AppTheme by AppThemePreferenceDelegate("app_theme", AppTheme.MODE_AUTO)
+    override var theme: AppTheme by AppThemePreferenceDelegate("app_theme", AppTheme.AUTO)
 
     private val preferences: SharedPreferences = context.getSharedPreferences("sample_theme", Context.MODE_PRIVATE)
 

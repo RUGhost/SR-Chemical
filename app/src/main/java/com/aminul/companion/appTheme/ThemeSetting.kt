@@ -3,9 +3,9 @@ package com.aminul.companion.appTheme
 import kotlinx.coroutines.flow.StateFlow
 
 enum class AppTheme {
-    MODE_AUTO,
-    MODE_DAY,
-    MODE_NIGHT;
+    AUTO,
+    LIGHT,
+    DARK;
 
     companion object {
         fun fromOrdinal(ordinal: Int) = values()[ordinal]

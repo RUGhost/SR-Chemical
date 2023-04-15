@@ -389,12 +389,6 @@ fun TankLevelConverter() {
     }
 }
 
-@Composable
-fun Content(){
-
-
-}
-
 fun getValidatedNumber(text: String, beforeDot: Int, afterDot: Int): String {
     val filteredChars = text.filterIndexed { index, c ->
         c in "0123456789" || (c == '.' && text.indexOf('.') == index)
